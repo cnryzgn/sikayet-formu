@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Şantiye Bildirim Formu</title>
+    <style>
+        :root { 
+            --primary: #FF8C00; /* Şantiye turuncusu */
+            --dark: #1a1a1a; 
+            --bg: #f8f9fa;
+        }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg); 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            padding-top: 20px;
+        }
+
+        .mobile-card { 
+            background: white; 
+            width: 92%; 
+            max-width: 450px; 
+            padding: 20px; 
+            border-radius: 20px; 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            border-top: 10px solid var(--primary);
+        }
+
+        h2 { color: var(--dark); margin: 0 0 10px 0; font-size: 1.4rem; text-align: center; }
+        .info-text { color: #7f8c8d; font-size: 0.85rem; text-align: center; margin-bottom: 25px; line-height: 1.4; }
+
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #444; font-size: 0.9rem; }
+        
+        /* Mobilde daha kolay seçim için büyük kutular */
+        select, textarea { 
+            width: 100%; 
+            padding: 15px; 
+            margin-bottom: 20px; 
+            border: 2px solid #edf2f7; 
+            border-radius: 12px; 
+            box-sizing: border-box; 
+            font-size: 16px; /* Mobilde zoom yapmaması için en az 16px olmalı */
+            background: #fdfdfd;
+            transition: border-color 0.2s;
+        }
+
+        select:focus, textarea:focus { 
+            border-color: var(--primary); 
+            outline: none; 
+            background: white;
+        }
+
+        textarea { height: 140px; resize: none; }
+
+        button { 
+            background-color: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 18px; 
+            width: 100%; 
+            border-radius: 12px; 
+            font-size: 1.1rem; 
+            font-weight: 800; 
+            cursor: pointer; 
+            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button:active { transform: scale(0.98); }
+        button:disabled { background-color: #bdc3c7; box-shadow: none; }
+
+        .success-msg { 
+            display: none; 
+            text-align: center; 
+            padding: 20px; 
+            color: #27ae60; 
+            font-weight: bold; 
+        }
+
+        /* Alt bilgi */
+        .footer-note { 
+            text-align: center; 
+            font-size: 0.75rem; 
+            color: #bdc3c7; 
+            margin-top: 20px; 
+        }
+    </style>
+</head>
+<body>
+
+<div class="mobile-card" id="formContainer">
+    <h2>Geri Bildirim Formu</h2>
+    <p class="info-text">Bu form anonimdir. İsim vermeniz gerekmez. Sorunu aşağıdan bildiriniz.</p>
+    
+    <label>Bildirim Kategorisi</label>
+    <select id="konu">
+        <option value="İSG Tehlikesi">⚠️ İş Güvenliği Tehlikesi</option>
+        <option value="Malzeme Talebi">📦 Malzeme/Araç Talebi</option>
+        <option value="Arıza/Hasar">🛠️ Arıza veya Hasar</option>
+        <option value="Genel Şikayet">💬 Genel Şikayet/Öneri</option>
+    </select>
+
+    <label>Detaylı Açıklama</label>
+    <textarea id="mesaj" placeholder="Nerede, ne zaman, ne oldu?"></textarea>
+
+    <button id="submitBtn" onclick="gonder()">GÖNDER</button>
+    <div id="successMsg" class="success-msg">
+        <div style="font-size: 3rem;">✅</div>
+        Mesajınız başarıyla iletildi.<br>Teşekkür ederiz.
+    </div>
+    
+    <div class="footer-note">Cihaz ID: <span id="deviceId">Yükleniyor...</span></div>
+</div>
+
+<script>
+    // Yarı-anonimlik için basit bir Fingerprint (Cihaz Özeti)
+    document.getElementById('deviceId').innerText =  
+        navigator.platform + "-" + screen.width + "x" + screen.height;
+
+    function gonder() {
+        const btn = document.getElementById('submitBtn');
+        const msg = document.getElementById('mesaj').value;
+        const konu = document.getElementById('konu').value;
+        const device = document.getElementById('deviceId').innerText;
+
+        if(!msg) { alert("Lütfen açıklama yazınız."); return; }
+
+        btn.disabled = true;
+        btn.innerText = "İletiliyor...";
+
+        // Google Script Fonksiyonu Çağrısı
+        google.script.run.withSuccessHandler(function() {
+            document.getElementById('konu').style.display = "none";
+            document.getElementById('mesaj').style.display = "none";
+            document.querySelectorAll('label').forEach(el => el.style.display = "none");
+            btn.style.display = "none";
+            document.querySelector('.info-text').style.display = "none";
+            document.getElementById('successMsg').style.display = "block";
+        }).formuKaydet({
+            konu: konu,
+            mesaj: msg,
+            cihaz: device
+        });
+    }
+</script>
+
+</body>
+</html>
